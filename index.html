@@ -46,10 +46,24 @@
             color: #666;
             font-size: 0.9em;
         }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .feature {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
     </style>
-    <!-- Supabase 客户端库 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script type="module" src="./supabase-config.js"></script>
 </head>
 <body>
     <header>
@@ -76,86 +90,54 @@
             </ul>
         </div>
         
-        <div class="info-card">
-            <h3>这个网站的特点</h3>
-            <ul>
-                <li>✅ 响应式设计，适配各种设备</li>
-                <li>✅ 简洁现代的界面</li>
-                <li>✅ 通过GitHub Pages自动部署</li>
-                <li>✅ 完全免费托管</li>
-                <li>✅ 支持自定义域名</li>
-                <li>✅ 集成 Supabase 后端</li>
-            </ul>
-            <p style="margin-top: 15px;">
-                <a href="message-board.html" style="display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">
-                    💬 前往留言板
-                </a>
-            </p>
+        <h2>网站特点</h2>
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <h3>响应式设计</h3>
+                <p>适配各种设备尺寸</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>快速加载</h3>
+                <p>静态文件，全球CDN加速</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>安全可靠</h3>
+                <p>HTTPS加密，无后端风险</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🆓</div>
+                <h3>完全免费</h3>
+                <p>GitHub Pages 免费托管</p>
+            </div>
         </div>
         
         <div class="info-card">
-            <h3>Supabase 功能演示</h3>
-            <div id="supabase-demo">
-                <p>正在连接 Supabase...</p>
-            </div>
-            <button onclick="testSupabase()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                测试 Supabase 连接
-            </button>
+            <h3>项目展示</h3>
+            <p>这里可以展示你的项目：</p>
+            <ul>
+                <li>个人博客/作品集</li>
+                <li>技术文档</li>
+                <li>演示页面</li>
+                <li>在线简历</li>
+            </ul>
+            <p style="margin-top: 15px;">
+                <a href="projects.html" style="display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">
+                    🚀 查看我的项目
+                </a>
+                <a href="https://github.com/TTTiuuu" style="display: inline-block; padding: 10px 20px; background: #24292e; color: white; text-decoration: none; border-radius: 5px;">
+                    🐙 访问我的GitHub
+                </a>
+            </p>
         </div>
     </div>
     
     <footer>
         <p>© 2026 TTTiuuu. 由爪爪助手配置。</p>
         <p>最后更新: 2026年4月5日</p>
-        <p>后端: Supabase | 前端: GitHub Pages</p>
+        <p>纯静态网站 | GitHub Pages 托管</p>
     </footer>
-    
-    <script>
-        // 测试 Supabase 连接
-        async function testSupabase() {
-            const demo = document.getElementById('supabase-demo')
-            demo.innerHTML = '<p>正在测试连接...</p>'
-            
-            try {
-                // 测试认证服务
-                const { data: authData, error: authError } = await window.supabase
-                    .createClient('https://xhglunllxuwxgtsezpyi.supabase.co', 'sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b')
-                    .auth.signInWithPassword({
-                        email: 'test@example.com',
-                        password: 'test123'
-                    })
-                
-                if (authError && authError.message.includes('Invalid login credentials')) {
-                    demo.innerHTML = '<p style="color: green;">✅ Supabase 连接成功！</p>'
-                    demo.innerHTML += '<p>认证服务正常（预期失败：测试用户不存在）</p>'
-                } else if (authError) {
-                    demo.innerHTML = `<p style="color: orange;">⚠️ 连接异常: ${authError.message}</p>`
-                } else {
-                    demo.innerHTML = '<p style="color: green;">✅ 连接成功！</p>'
-                }
-                
-                // 测试 REST API
-                const { data: apiData, error: apiError } = await fetch('https://xhglunllxuwxgtsezpyi.supabase.co/rest/v1/', {
-                    headers: {
-                        'apikey': 'sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b',
-                        'Authorization': 'Bearer sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b'
-                    }
-                }).then(res => res.json()).catch(err => ({ error: err.message }))
-                
-                if (!apiError) {
-                    demo.innerHTML += '<p>✅ REST API 可访问</p>'
-                }
-                
-            } catch (error) {
-                demo.innerHTML = `<p style="color: red;">❌ 连接失败: ${error.message}</p>`
-            }
-        }
-        
-        // 页面加载时检查连接
-        window.addEventListener('DOMContentLoaded', () => {
-            const demo = document.getElementById('supabase-demo')
-            demo.innerHTML = '<p>Supabase 已配置，点击按钮测试连接</p>'
-        })
-    </script>
 </body>
 </html>
