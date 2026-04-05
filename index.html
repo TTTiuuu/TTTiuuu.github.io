@@ -47,6 +47,9 @@
             font-size: 0.9em;
         }
     </style>
+    <!-- Supabase 客户端库 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script type="module" src="./supabase-config.js"></script>
 </head>
 <body>
     <header>
@@ -81,13 +84,78 @@
                 <li>✅ 通过GitHub Pages自动部署</li>
                 <li>✅ 完全免费托管</li>
                 <li>✅ 支持自定义域名</li>
+                <li>✅ 集成 Supabase 后端</li>
             </ul>
+            <p style="margin-top: 15px;">
+                <a href="message-board.html" style="display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">
+                    💬 前往留言板
+                </a>
+            </p>
+        </div>
+        
+        <div class="info-card">
+            <h3>Supabase 功能演示</h3>
+            <div id="supabase-demo">
+                <p>正在连接 Supabase...</p>
+            </div>
+            <button onclick="testSupabase()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                测试 Supabase 连接
+            </button>
         </div>
     </div>
     
     <footer>
         <p>© 2026 TTTiuuu. 由爪爪助手配置。</p>
         <p>最后更新: 2026年4月5日</p>
+        <p>后端: Supabase | 前端: GitHub Pages</p>
     </footer>
+    
+    <script>
+        // 测试 Supabase 连接
+        async function testSupabase() {
+            const demo = document.getElementById('supabase-demo')
+            demo.innerHTML = '<p>正在测试连接...</p>'
+            
+            try {
+                // 测试认证服务
+                const { data: authData, error: authError } = await window.supabase
+                    .createClient('https://xhglunllxuwxgtsezpyi.supabase.co', 'sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b')
+                    .auth.signInWithPassword({
+                        email: 'test@example.com',
+                        password: 'test123'
+                    })
+                
+                if (authError && authError.message.includes('Invalid login credentials')) {
+                    demo.innerHTML = '<p style="color: green;">✅ Supabase 连接成功！</p>'
+                    demo.innerHTML += '<p>认证服务正常（预期失败：测试用户不存在）</p>'
+                } else if (authError) {
+                    demo.innerHTML = `<p style="color: orange;">⚠️ 连接异常: ${authError.message}</p>`
+                } else {
+                    demo.innerHTML = '<p style="color: green;">✅ 连接成功！</p>'
+                }
+                
+                // 测试 REST API
+                const { data: apiData, error: apiError } = await fetch('https://xhglunllxuwxgtsezpyi.supabase.co/rest/v1/', {
+                    headers: {
+                        'apikey': 'sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b',
+                        'Authorization': 'Bearer sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b'
+                    }
+                }).then(res => res.json()).catch(err => ({ error: err.message }))
+                
+                if (!apiError) {
+                    demo.innerHTML += '<p>✅ REST API 可访问</p>'
+                }
+                
+            } catch (error) {
+                demo.innerHTML = `<p style="color: red;">❌ 连接失败: ${error.message}</p>`
+            }
+        }
+        
+        // 页面加载时检查连接
+        window.addEventListener('DOMContentLoaded', () => {
+            const demo = document.getElementById('supabase-demo')
+            demo.innerHTML = '<p>Supabase 已配置，点击按钮测试连接</p>'
+        })
+    </script>
 </body>
 </html>

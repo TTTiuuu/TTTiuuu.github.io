@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 - TTTiuuu的网站</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message-list {
+            margin-top: 40px;
+        }
+        .message {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .message-content {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>💬 网站留言板</h1>
+        <p>使用 Supabase 实时数据库</p>
+    </header>
+    
+    <div class="container">
+        <a href="index.html" class="back-link">← 返回首页</a>
+        
+        <div id="status" class="status"></div>
+        
+        <h2>发表留言</h2>
+        <form id="messageForm">
+            <div class="form-group">
+                <label for="name">姓名 *</label>
+                <input type="text" id="name" required placeholder="请输入您的姓名">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" id="email" placeholder="请输入邮箱（可选）">
+            </div>
+            
+            <div class="form-group">
+                <label for="message">留言内容 *</label>
+                <textarea id="message" required placeholder="请输入您的留言..."></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn">提交留言</button>
+        </form>
+        
+        <div class="message-list">
+            <h2>最新留言</h2>
+            <div id="messagesContainer">
+                <p>正在加载留言...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Supabase 客户端库 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://xhglunllxuwxgtsezpyi.supabase.co'
+        const SUPABASE_KEY = 'sb_publishable_H0C0qjtrwZn52Xc9GO2ufw_6TJNRD7b'
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+        
+        // 状态显示
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status')
+            statusEl.textContent = message
+            statusEl.className = `status ${type}`
+            statusEl.style.display = 'block'
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none'
+                }, 5000)
+            }
+        }
+        
+        // 加载留言
+        async function loadMessages() {
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(20)
+                
+                if (error) throw error
+                
+                const container = document.getElementById('messagesContainer')
+                
+                if (!messages || messages.length === 0) {
+                    container.innerHTML = '<p>还没有留言，快来第一个发言吧！</p>'
+                    return
+                }
+                
+                container.innerHTML = messages.map(msg => `
+                    <div class="message">
+                        <div class="message-header">
+                            <span><strong>${msg.name || '匿名用户'}</strong></span>
+                            <span>${new Date(msg.created_at).toLocaleString('zh-CN')}</span>
+                        </div>
+                        <div class="message-content">
+                            ${msg.message.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `).join('')
+                
+            } catch (error) {
+                console.error('加载留言失败:', error)
+                document.getElementById('messagesContainer').innerHTML = 
+                    `<p class="error">加载留言失败: ${error.message}</p>`
+            }
+        }
+        
+        // 提交留言
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            
+            const name = document.getElementById('name').value.trim()
+            const email = document.getElementById('email').value.trim()
+            const message = document.getElementById('message').value.trim()
+            const submitBtn = document.getElementById('submitBtn')
+            
+            if (!name || !message) {
+                showStatus('请填写姓名和留言内容', 'error')
+                return
+            }
+            
+            submitBtn.disabled = true
+            submitBtn.textContent = '提交中...'
+            showStatus('正在提交留言...', 'loading')
+            
+            try {
+                const { data, error } = await supabase
+                    .from('messages')
+                    .insert([{ 
+                        name, 
+                        email: email || null, 
+                        message 
+                    }])
+                
+                if (error) throw error
+                
+                showStatus('留言提交成功！', 'success')
+                document.getElementById('messageForm').reset()
+                
+                // 重新加载留言
+                await loadMessages()
+                
+            } catch (error) {
+                console.error('提交失败:', error)
+                showStatus(`提交失败: ${error.message}`, 'error')
+            } finally {
+                submitBtn.disabled = false
+                submitBtn.textContent = '提交留言'
+            }
+        })
+        
+        // 实时订阅新留言
+        function setupRealtime() {
+            supabase
+                .channel('public:messages')
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'messages' },
+                    (payload) => {
+                        console.log('收到新留言:', payload.new)
+                        showStatus('收到新留言！', 'success')
+                        loadMessages()
+                    }
+                )
+                .subscribe()
+        }
+        
+        // 页面加载
+        window.addEventListener('DOMContentLoaded', async () => {
+            showStatus('正在连接数据库...', 'loading')
+            
+            try {
+                // 测试连接
+                const { data, error } = await supabase
+                    .from('messages')
+                    .select('count', { count: 'exact', head: true })
+                
+                if (error && error.message.includes('relation "messages" does not exist')) {
+                    showStatus('请先在 Supabase 中创建 messages 表', 'error')
+                    document.getElementById('messagesContainer').innerHTML = `
+                        <div class="error">
+                            <p>需要先创建数据库表：</p>
+                            <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; overflow: auto;">
+CREATE TABLE messages (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT,
+  email TEXT,
+  message TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "允许插入消息" ON messages
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "允许查看消息" ON messages
+  FOR SELECT USING (true);
+                            </pre>
+                            <p>在 Supabase SQL 编辑器中执行以上语句</p>
+                        </div>
+                    `
+                    return
+                }
+                
+                showStatus('数据库连接成功', 'success')
+                await loadMessages()
+                setupRealtime()
+                
+            } catch (error) {
+                console.error('初始化失败:', error)
+                showStatus(`连接失败: ${error.message}`, 'error')
+            }
+        })
+    </script>
+</body>
+</html>
